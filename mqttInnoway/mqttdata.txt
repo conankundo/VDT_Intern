@@ -1,0 +1,109 @@
+{
+  "entityInfo": {
+    "adapter_id": "		",
+    "createdBy": "d7a55498-4fba-4162-bff6-3806f936622f",
+    "destination": "adapter-0",
+    "grpc_address": "adapter-0.viot-adapter:8957",
+    "handle_msg_svc": "NV_e_sensor_aqua_payload",
+    "name": "Adapter_e_sensor_aqua_deviceID",
+    "owner": "d7a55498-4fba-4162-bff6-3806f936622f",
+    "project_id": "aa04fe8a-02fe-4929-bae7-9a7f4c7a9fca",
+    "sub_topic_regex": "innoway/pub2here",
+    "thing_id": "8ce226f7-e2f7-4c5f-97e0-ffa094676c17",
+    "topic": "innoway/pub2here",
+    "user_id": "d7a55498-4fba-4162-bff6-3806f936622f"
+  },
+  "payload": {
+    "key": "77bb52ba-08f3-4e1f-8158-80a80b570dcc",
+    "status": 1
+  },
+  "msg": {},
+  "metadata": ""
+}
+______________
+NV_e_sensor_aqua_payload
+--------------
+let payloadData = JSON.parse(payload);
+let resDev = await me.NV_e_sensor_aqua_deviceID({devideID: payloadData.id});
+let deviceInfo = {};
+
+if (resDev.success) {
+  deviceInfo = resDev.data;
+} else {
+  return {"message": "resDev false"}
+}
+
+let logged = true
+let attrs = {}
+attrs['status'] = payloadData.status;
+  
+let res = await Thing(deviceInfo.id).UpsertAttributes(attrs, {logged: logged});
+
+if (res.success) {
+  return JSON.parse(payloadData)
+} else {
+  return {"message": "UpsertAttributes false"}
+}
+____________________
+NV_e_sensor_aqua_payload ver2
+--------------------
+let metadata = JSON.parse(entityInfo) 
+let topic = metadata.topic
+let msgs =  String(topic)
+await Adapter().SendMqttResponse({
+  topic: 'innoway/pubDownHere', 
+  message: msgs
+}); 
+return msgs;
+___________________
+NV_e_sensor_aqua_test1
+-------------------
+// const msg = {"command": status }
+let payloadData = JSON.parse(status);
+const msg =  String(payloadData.status)
+let res = await Adapter().SendMqttResponse({
+    topic: "innoway/pubDownHere", 
+    message: JSON.stringify(msg)
+})
+if (res.success){
+  // Gửi thành công
+  return msg
+}else{
+  // Gửi thất bại
+  return {"message":"error"}
+}
+_____________________
+NV Lamp_controller
+---------------------
+const msg = {"status": status  }
+// const msg = { status  }
+let res = await Adapter().SendToAdapterMqtt({
+    adapterId: "c05ec3c8-515a-4fa7-84f3-fd0c4cc887a3",
+    topic: "dac/controll", 
+    message:JSON.stringify(msg),
+})
+if (res.success){
+  // Gửi thành công
+  return msg
+}else{
+  // Gửi thất bại
+  return {"message":"error"}
+}
+______________________
+Nghiepvu_testSV2UE
+----------------------
+const msg = {"status": status  }
+// const msg = { status  }
+let res = await Adapter().SendToAdapterMqtt({
+    adapterId: "21d46443-f25f-443d-9aac-00b8889445e1",
+    topic: "innoway/sv2ue", 
+    // message:JSON.stringify(msg),
+    message: String(status),
+})
+if (res.success){
+  // Gửi thành công
+  return msg
+}else{
+  // Gửi thất bại
+  return {"message":"error"}
+}
